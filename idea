@@ -1,0 +1,28 @@
+
+author : Jeongyeop Lee
+date : 2023 - 11 - 07
+
+
+1. 물체 선택
+2. 제자리 돌기
+3. 다가가기
+4. 물체 좌표
+5. 물체 집기
+6. 제자리 돌기
+7. 목표지점 가기
+8. 물체 떨어뜨리기
+9. 1번 반복
+
+  ├─
+
+cart_manager.py         <------- 시작
+    └─ shopping_cart.py
+
+
+master_control.py
+    └─
+
+
+
+
+
