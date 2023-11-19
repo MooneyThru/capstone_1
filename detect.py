@@ -32,6 +32,7 @@ import argparse
 import os
 import platform
 import sys
+import json
 
 from pathlib import Path
 
@@ -123,6 +124,8 @@ def run(
     # Run inference
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
+
+    json_data = []
     for path, im, im0s, vid_cap, s in dataset:
         with dt[0]:
             im = torch.from_numpy(im).to(model.device)
@@ -173,66 +176,97 @@ def run(
                 for *xyxy, conf, cls in reversed(det):
 
                     class_name = names[int(cls)]
-                    camera_focal = 1250         # It should me mm of camera focal distance
+
                     if class_name == 'giraffe': # It should cm of all measurement
-                        giraffe_x = 4           # look a front of giraffe
-                        giraffe_side = 6        # look a side of giraffe
-                        giraffe_heiht = 11      # look any direction of giraffe
+                        giraffe_x = 6.5          # look a front of giraffe
+                        giraffe_side = 14       # look a side of giraffe
+                        giraffe_heiht = 17      # look any direction of giraffe
+                    elif class_name == 'dinosaur':
+                        dinosaur_x = 3.9
+                        dinosaur_side = 12.5
+                        dinosaur_height = 8.8
+                    elif class_name == 'monkey_doll':
+                        monkey_x = 6.5
+                        monkey_side = 8.8
+                        monkey_heiht = 6
+                    elif class_name == 'elephant_doll':
+                        elephant_x = 9.5
+                        elephant_side = 14
+                        elephant_heiht = 8
 
-                    x1, y1, x2, y2 = map(int, xyxy)
-                    # 클래스명과 바운딩 박스 좌표를 출력
-                    #print(f"클래스: {class_name}, 바운딩 박스 좌표: 왼쪽 상단 ({x1}, {y1}), 오른쪽 하단 ({x2}, {y2})")
-                    value_x = x2 - x1
-                    value_y = y2 - y1
+                x1, y1, x2, y2 = map(int, xyxy)
+                # 클래스명과 바운딩 박스 좌표를 출력
+                #print(f"클래스: {class_name}, 바운딩 박스 좌표: 왼쪽 상단 ({x1}, {y1}), 오른쪽 하단 ({x2}, {y2})")
+                value_x = x2 - x1
+                value_y = y2 - y1
 
-                    # If center_class is located in center of camera screen, it means that the Jetson embedded computer is on
-                    # object linear.
-                    center_class_x = (x2 + x1) / 2
-                    center_class_y = (y2 + y1) / 2
+                # If center_class is located in center of camera screen, it means that the Jetson embedded computer is on
+                # object linear.
+                center_class_x = (x2 + x1) / 2
+                center_class_y = (y2 + y1) / 2
 
-                    # 데이터를 큐에 추가
-                    value_queue_x.append(value_x)
-                    value_queue_y.append(value_y)
-                    value_queue_center_x.append(center_class_x)
-                    value_queue_center_y.append(center_class_y)
+                # 데이터를 큐에 추가
+                value_queue_x.append(value_x)
+                value_queue_y.append(value_y)
+                value_queue_center_x.append(center_class_x)
+                value_queue_center_y.append(center_class_y)
 
-                    # 평균값 계산
-                    average_x = sum(value_queue_x) / len(value_queue_x)
-                    average_y = sum(value_queue_y) / len(value_queue_y)
-                    center_x = sum(value_queue_center_x) /len(value_queue_center_x)
-                    center_y = sum(value_queue_center_y) / len(value_queue_center_y)
-                    # surface_real = average_x * average_y
+                # 평균값 계산
+                average_x = sum(value_queue_x) / len(value_queue_x)
+                average_y = sum(value_queue_y) / len(value_queue_y)
+                center_x = sum(value_queue_center_x) /len(value_queue_center_x)
+                center_y = sum(value_queue_center_y) / len(value_queue_center_y)
+                # surface_real = average_x * average_y
 
-                    # If doesn't exist height of object, it means that object is too close to measure of distance from camera.
-                    # focal camera distance is 1250, it should be (mm), 6 cm is for giraffe's side length.
+                # If doesn't exist height of object, it means that object is too close to measure of distance from camera.
+                # focal camera distance is 1250, it should be (mm), 6 cm is for giraffe's side length.
 
-                    # distnace_xy = 1250 * {real_surface} / surface_real
-                    distance_x = camera_focal * 6 / average_x
+                # distnace_xy = 1250 * {real_surface} / surface_real
+                distance_y = round(float(940 * 17 / value_queue_y[-1]), 2) # 1250 : It should me mm of camera focal distance
+                distance_x = round(float(940 * 6.5 / value_queue_x[-1]), 2)
 
-                    LOGGER.info(f"object : {class_name}, x_length of object : {average_x}, distance : {distance_x}")
-                    # bbox_coordinates = tuple(map(int, xyxy))
-                    # LOGGER.info(f"class: {class_name}, bounding box coordinate : {bbox_coordinates}")
 
-                    # 평균값 출력
-                    # LOGGER.info(f'Average value_x: {average_x}, Average value_y: {average_y}')
+                y_target = ((center_x - 240) * distance_y) / 940
+                z_target = ((center_y - 240) * distance_y) / 940
 
-                    with open('average_values.txt', 'w') as f:
-                        f.write(f'Average value_x: {center_x}\n')
-                        # f.write(f'Average value_y: {center_y}\n')
-                        f.write(f'Average distance: {distance_x}\n')
+                LOGGER.info(f"object : {class_name}, coordinate : ({y_target}, {z_target}), distance : {distance_y}")
+                # bbox_coordinates = tuple(map(int, xyxy))
+                # LOGGER.info(f"class: {class_name}, bounding box coordinate : {bbox_coordinates}")
 
-                    if save_txt:  # Write to file
-                        xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                        line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
-                        with open(f'{txt_path}.txt', 'a') as f:
-                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                # 평균값 출력
+                # LOGGER.info(f'Average value_x: {average_x}, Average value_y: {average_y}')
 
-                    if save_img or save_crop or view_img:  # Add bbox to image
-                        c = int(cls)  # integer class
-                        label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
-                        annotator.box_label(xyxy, label, color=colors(c, True))
-                    if save_crop:
-                        save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
+                # with open('average_values.txt', 'w') as f:
+                #     f.write(f'Average value_x: {center_x}\n')
+                #     # f.write(f'Average value_y: {center_y}\n')
+                #     f.write(f'Average distance: {distance_y}\n')
+
+                # JSON 데이터 구조에 추가합니다.
+                json_data = {
+                    "class_name": class_name,
+                    "center_x": round(float(center_x), 2),
+                    "center_y": round(float(center_y), 2),
+                    "distance_x": round(float(distance_x), 2),
+                    "distance_y": round(float(distance_y), 2),
+                    "y_target": round(float(y_target), 2),
+                    "z_target": round(float(z_target), 2)
+                }
+
+                with open('average_values.json', 'w') as f:
+                    json.dump(json_data, f, indent=4)
+
+                if save_txt:  # Write to file
+                    xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+                    line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
+                    with open(f'{txt_path}.txt', 'a') as f:
+                        f.write(('%g ' * len(line)).rstrip() % line + '\n')
+
+                if save_img or save_crop or view_img:  # Add bbox to image
+                    c = int(cls)  # integer class
+                    label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
+                    annotator.box_label(xyxy, label, color=colors(c, True))
+                if save_crop:
+                    save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
 
                 # #print(det)
                 # tensor_x = torch.tensor(det)

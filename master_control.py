@@ -162,40 +162,45 @@ def grip_coordinate(detected_object):
                 z_target = obj['z_coordinate']
 
     return x_target, y_target, z_target
+
 def pick_up_object(theta2_deg, theta3_deg, theta4_deg):
     # 서보 모터 2, 3, 4의 각도를 설정
     robot.set_servo_angle(4, theta2_deg)
     robot.set_servo_angle(3, theta3_deg)
     robot.set_servo_angle(2, theta4_deg)
     robot.set_motor_speed(-10,-10)
-    time.sleep(0.5)
+    time.sleep(1)
     robot.set_motor_speed(10, 10)
-    time.sleep(0.5)
+    time.sleep(1)
     robot.set_servo_angle(1, 30)
     time.sleep(1)
     # 잡은거 확인 하는
 
     robot.set_servo_angle(4, 180)
+    time.sleep(1)
     robot.set_servo_angle(3, 0)
+    time.sleep(1)
     robot.set_servo_angle(2, 100)
-
 
 def place_object(robot, theta2_deg, theta3_deg, theta4_deg):
     robot.set_servo_angle(4, theta2_deg)
     robot.set_servo_angle(3, theta3_deg)
     robot.set_servo_angle(2, theta4_deg)
     robot.set_motor_speed(-10, -10)
-    time.sleep(0.5)
+    time.sleep(1)
     robot.set_motor_speed(10, 10)
-    time.sleep(0.5)
+    time.sleep(1)
     robot.set_servo_angle(1, 80)
     time.sleep(1)
     # 잡은거 확인 하는
 
     # 로봇팔 원위치
     robot.set_servo_angle(4, 180)
+    time.sleep(1)
     robot.set_servo_angle(3, 0)
+    time.sleep(1)
     robot.set_servo_angle(2, 100)
+    time.sleep(1)
 
 # 아두이노와 시리얼 통신 설정
 
