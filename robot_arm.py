@@ -1,11 +1,12 @@
 import serial
 import time
 import numpy as np
-import master_control
+# import master_control
 
-# # 아두이노와 시리얼 통신 설정
-# arduino = serial.Serial('COM7', 9600)  # 'COM포트'는 아두이노가 연결된 포트로 수정
-# time.sleep(2)  # 시리얼 통신 시작 후 잠시 대기
+# # # 아두이노와 시리얼 통신 설정
+port = 'COM3'
+arduino = serial.Serial(port, 9600)  # 'COM포트'는 아두이노가 연결된 포트로 수정
+time.sleep(2)  # 시리얼 통신 시작 후 잠시 대기
 
 # 링크 길이 정의
 link1_length = 12.0
@@ -50,6 +51,13 @@ def inverse_kinematics(x_target, y_target, z_target):
 
     return theta1_deg, theta2_deg, theta3_deg, theta4_deg
 
+def set_motor_speed(right_speed, left_speed):
+    command = f"M1{left_speed}\nM2{right_speed}\n"
+    arduino.write(command.encode())
+
+def set_servo_angle( servo_number, angle):
+    command = f"S{servo_number}{angle}\n"
+    arduino.write(command.encode())
 
 # 사용자 입력 처리
 while True:
@@ -72,7 +80,7 @@ while True:
             print(f"Link1 joint angle: {theta2}")
             print(f"Link3 joint angle: {theta3}")
             print(f"Link4 joint angle: {theta4}")
-
+            #
             # set_servo_angle(1, theta2)
             # time.sleep(1)
             # set_servo_angle(2, theta3)
@@ -86,7 +94,7 @@ while True:
         elif command_type == "m":
             motorSpeedRight = int(input("Enter PWM value for right motor (negative for reverse): "))
             motorSpeedLeft = int(input("Enter PWM value for left motor (negative for reverse): "))
-            # set_motor_speed(motorSpeedRight, motorSpeedLeft)
+            set_motor_speed(motorSpeedRight, motorSpeedLeft)
 
     except KeyboardInterrupt:
         break
