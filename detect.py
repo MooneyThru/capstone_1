@@ -193,6 +193,10 @@ def run(
                         elephant_x = 9.5
                         elephant_side = 14
                         elephant_heiht = 8
+                    elif class_name == 'box':
+                        box_x = 23
+                        box_side = 15
+                        box_heigh = 11.8
 
                 x1, y1, x2, y2 = map(int, xyxy)
                 # 클래스명과 바운딩 박스 좌표를 출력
