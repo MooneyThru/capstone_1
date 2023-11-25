@@ -125,7 +125,8 @@ def run(
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
 
-    json_data = []
+    json_data_list = []
+    file_path = r"C:\Users\moone\PycharmProjects\capstone\detected_objects.json"
     for path, im, im0s, vid_cap, s in dataset:
         with dt[0]:
             im = torch.from_numpy(im).to(model.device)
@@ -181,22 +182,27 @@ def run(
                         giraffe_x = 6.5          # look a front of giraffe
                         giraffe_side = 14       # look a side of giraffe
                         giraffe_heiht = 17      # look any direction of giraffe
+                        height = giraffe_heiht
+                    elif class_name == 'giraffe_head':
+                        giraffe_head_side = 5
+                        giraffe_head_height = 5
+                        height = 5
                     elif class_name == 'dinosaur':
                         dinosaur_x = 3.9
                         dinosaur_side = 12.5
                         dinosaur_height = 8.8
+                        height = dinosaur_height
                     elif class_name == 'monkey_doll':
                         monkey_x = 6.5
                         monkey_side = 8.8
                         monkey_heiht = 6
+                        height = monkey_heiht
                     elif class_name == 'elephant_doll':
                         elephant_x = 9.5
                         elephant_side = 14
                         elephant_heiht = 8
-                    elif class_name == 'box':
-                        box_x = 23
-                        box_side = 15
-                        box_heigh = 11.8
+                        height = elephant_heiht
+
 
                 x1, y1, x2, y2 = map(int, xyxy)
                 # 클래스명과 바운딩 박스 좌표를 출력
@@ -226,12 +232,13 @@ def run(
                 # focal camera distance is 1250, it should be (mm), 6 cm is for giraffe's side length.
 
                 # distnace_xy = 1250 * {real_surface} / surface_real
-                distance_y = round(float(940 * 17 / value_queue_y[-1]), 2) # 1250 : It should me mm of camera focal distance
-                distance_x = round(float(940 * 6.5 / value_queue_x[-1]), 2)
+                distance_y = round(float(940 * height / average_y), 2) # 1250 : It should me mm of camera focal distance
+                # distance_x = round(float(940 * 6.5 / value_queue_x[-1]), 2)
 
 
                 y_target = ((center_x - 240) * distance_y) / 940
-                z_target = ((center_y - 240) * distance_y) / 940
+                z_target = height / 2
+                # z_target = ((center_y - 240) * distance_y) / 940
 
                 LOGGER.info(f"object : {class_name}, coordinate : ({y_target}, {z_target}), distance : {distance_y}")
                 # bbox_coordinates = tuple(map(int, xyxy))
@@ -250,14 +257,19 @@ def run(
                     "class_name": class_name,
                     "center_x": round(float(center_x), 2),
                     "center_y": round(float(center_y), 2),
-                    "distance_x": round(float(distance_x), 2),
+                    # "distance_x": round(float(distance_x), 2),
                     "distance_y": round(float(distance_y), 2),
-                    "y_target": round(float(y_target), 2),
+                    "y_target": round(float(distance_y), 2),
                     "z_target": round(float(z_target), 2)
                 }
+                json_data_list.append(json_data)
 
-                with open('average_values.json', 'w') as f:
-                    json.dump(json_data, f, indent=4)
+                # 리스트 크기 확인 및 조정
+                if len(json_data_list) > 20:
+                    json_data_list.pop(0)
+
+                with open(file_path, 'w') as f:
+                    json.dump(json_data_list, f, indent=4)
 
                 if save_txt:  # Write to file
                     xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
@@ -271,14 +283,16 @@ def run(
                     annotator.box_label(xyxy, label, color=colors(c, True))
                 if save_crop:
                     save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
+            else:
+                # 객체가 검출되지 않은 경우
+                json_data = {"info": "no detection"}
+                json_data_list.append(json_data)
+                if len(json_data_list) > 20:
+                    json_data_list.pop(0)
 
-                # #print(det)
-                # tensor_x = torch.tensor(det)
-                # tensor_y = torch.tensor(det)
-                #
-                # value_x = round(tensor_x[0][0].item(), 2)
-                # value_y = round(tensor_y[0][1].item(), 2)
-
+                with open(file_path, 'w') as f:
+                    json.dump(json_data_list, f, indent=4)
+                pass
             # Stream results
             im0 = annotator.result()
             if view_img:
@@ -310,6 +324,15 @@ def run(
 
         # Print time (inference-only)
         LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
+        # # 객체가 검출되지 않은 경우
+
+        # if len(json_data_list) > 5:
+        #     json_data_list.pop(0)
+        # else:
+        #     pass
+        #
+        # with open(file_path, 'w') as file:
+        #     json.dump(data, file, indent=4)
         #LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}")   this one is removed time values
 
     # Print results
