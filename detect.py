@@ -116,16 +116,17 @@ def run(
 
     # 데이터를 저장할 큐 생성
     # it files more than 40, it means that accuracy would be better than before.
-    value_queue_x = deque(maxlen=50)
-    value_queue_y = deque(maxlen=50)
-    value_queue_center_x = deque(maxlen=50)
-    value_queue_center_y = deque(maxlen=50)
+    value_queue_x = deque(maxlen=5)
+    value_queue_y = deque(maxlen=5)
+    value_queue_center_x = deque(maxlen=5)
+    value_queue_center_y = deque(maxlen=5)
 
     # Run inference
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
 
     json_data_list = []
+    height = 0
     file_path = r"C:\Users\moone\PycharmProjects\capstone\detected_objects.json"
     for path, im, im0s, vid_cap, s in dataset:
         with dt[0]:
@@ -185,8 +186,8 @@ def run(
                         height = giraffe_heiht
                     elif class_name == 'giraffe_head':
                         giraffe_head_side = 5
-                        giraffe_head_height = 5
-                        height = 5
+                        giraffe_head_height = 6
+                        height = giraffe_head_height
                     elif class_name == 'dinosaur':
                         dinosaur_x = 3.9
                         dinosaur_side = 12.5
@@ -230,17 +231,17 @@ def run(
 
                 # If doesn't exist height of object, it means that object is too close to measure of distance from camera.
                 # focal camera distance is 1250, it should be (mm), 6 cm is for giraffe's side length.
-
+                print(average_y)
                 # distnace_xy = 1250 * {real_surface} / surface_real
-                distance_y = round(float(940 * height / average_y), 2) # 1250 : It should me mm of camera focal distance
+                distance_y = round(float(860 * height / average_y), 2) # 1250 : It should me mm of camera focal distance
                 # distance_x = round(float(940 * 6.5 / value_queue_x[-1]), 2)
 
 
-                y_target = ((center_x - 240) * distance_y) / 940
+                y_target = ((center_x - 320) * distance_y) / 840
                 z_target = height / 2
                 # z_target = ((center_y - 240) * distance_y) / 940
 
-                LOGGER.info(f"object : {class_name}, coordinate : ({y_target}, {z_target}), distance : {distance_y}")
+                LOGGER.info(f"object : {class_name}, distance : {distance_y}")
                 # bbox_coordinates = tuple(map(int, xyxy))
                 # LOGGER.info(f"class: {class_name}, bounding box coordinate : {bbox_coordinates}")
 
