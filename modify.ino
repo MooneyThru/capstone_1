@@ -83,7 +83,7 @@ void setup() {
   analogWrite(motorSpeedPin2, 0);
 
   myservo1.attach(31);
-  myservo2.attach(32);
+  myservo2.attach(30);
   myservo3.attach(4);
   myservo4.attach(5);
   camera_servo.attach(6);
