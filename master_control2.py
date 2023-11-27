@@ -140,10 +140,30 @@ def align_with_object(item):
         print("align_with_object")
         try:
             detected_object = get_last_object(item)  # 루프 내에서 객체 정보 갱신
-            if detected_object:
+            if detected_object['class_name'] == 'giraffe' or 'dinosaur':
                 print("align_with_object")
                 x_coordinate = detected_object['center_x']  # 객체의 x 좌표
                 print("align_with_object: ", x_coordinate)
+
+                if 120 <= x_coordinate <= 160:
+                    set_motor_speed(0, 0)
+                    print("Object found and within range.")
+                    print("---------------break---------------")
+                    break  # 원하는 객체를 찾고 좌표 범위 내에 있으면 루프를 빠져나옴
+                elif x_coordinate < 100:
+                    set_motor_speed(-2, 2)
+                    time.sleep(1)
+                    set_motor_speed(0, 0)
+                    time.sleep(2)
+                    print("Object found but not within range. Adjusting position...")
+                elif 140 < x_coordinate:
+                    set_motor_speed(2, -2)
+                    time.sleep(1)
+                    set_motor_speed(0, 0)
+                    time.sleep(2)
+                    print("Object found but not within range. Adjusting position...")
+
+            elif detected_object['class_name'] == 'box':
                 if 190 <= x_coordinate <= 240:
                     set_motor_speed(0, 0)
                     print("Object found and within range.")
