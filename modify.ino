@@ -102,24 +102,28 @@ void loop() {
     int motorNumber = command.charAt(1) - '0';
     int rpm = command.substring(2).toInt();
 
-    if (motorNumber == 1) {
+     if (motorNumber == 1) {
       if (rpm >= 0) {
         targetRPM_left = rpm;
       } else { // rpm < 0
-        setMotorDirectionAndSpeed(1, rpm); // 모터 방향 및 속도 설정
+        targetRPM_left = -rpm; // RPM 값을 양수로 설정
       }
+      setMotorDirectionAndSpeed(1, rpm); // 모터 방향 및 속도 설정
+
     } else if (motorNumber == 2) {
       if (rpm >= 0) {
         targetRPM_right = rpm;
       } else { // rpm < 0
-       setMotorDirectionAndSpeed(2, rpm); // 모터 방향 및 속도 설정
-      }  
+        targetRPM_right = -rpm; // RPM 값을 양수로 설정
+      }
+      setMotorDirectionAndSpeed(2, rpm); // 모터 방향 및 속도 설정
       }
     } else if (command.startsWith("S")) {
     int servoNumber = command.charAt(1) - '0';
     int angle = command.substring(2).toInt();
     setServoAngle(servoNumber, angle);
     }
+
   }
 
   // 모터 RPM 제어 로직
