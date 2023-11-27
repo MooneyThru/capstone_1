@@ -34,12 +34,13 @@ volatile int targetRPM_left = 0;
 volatile int targetRPM_right = 0;
 
 // 서보 모터
-Servo myservo1, myservo2, myservo3, myservo4, camera_servo;
+Servo myservo1, myservo2, myservo3, myservo4;
 
 // 그리퍼 : 1 ~ 맨 밑 서보 모터가 4
-int current_angle1 = 100, current_angle2 = 90, current_angle3 = 20, current_angle4 = 90;
-// 모터 RPM 제어 함수
+int current_angle1 = 90, current_angle2 = 0, current_angle3 = 90, current_angle4 = 120;
+unsigned long lastUpdate1, lastUpdate2, lastUpdate3, lastUpdate4;
 
+// 모터 RPM 제어 함수
 void setMotorDirectionAndSpeed(int motorNumber, int rpm) {
   bool direction = rpm >= 0; // RPM이 양수 또는 0이면 true, 음수면 false
   int speedValue = abs(rpm); // 속도 값은 RPM의 절대값
@@ -82,10 +83,10 @@ void setup() {
   digitalWrite(motorDirection2_2, HIGH);
   analogWrite(motorSpeedPin2, 0);
 
-  myservo1.attach(5);
-  myservo2.attach(4);
-  myservo3.attach(6);
-  myservo4.attach(31);
+  myservo1.attach(31);
+  myservo2.attach(6);
+  myservo3.attach(4);
+  myservo4.attach(5);
   
   myservo1.write(current_angle1);
   myservo2.write(current_angle2);
@@ -204,10 +205,8 @@ void setServoAngle(int servoNumber, int angle) {
         myservo4.write(angle);
         current_angle4 = angle;
         break;
-     
-		break;
-        default:
-         Serial.println("Invalid servo number");
+      default:
+        Serial.println("Invalid servo number");
       }
 }
 
