@@ -36,13 +36,13 @@ volatile int targetRPM_right = 0;
 // 서보 모터
 Servo myservo1, myservo2, myservo3, myservo4, camera_servo;
 
-int current_angle1 = 100, current_angle2 = 0, current_angle3 = 100, current_angle4 = 70, current_angle5 = 90;
+// 그리퍼 : 1 ~ 맨 밑 서보 모터가 4
+int current_angle1 = 100, current_angle2 = 90, current_angle3 = 20, current_angle4 = 90;
 // 모터 RPM 제어 함수
 
 void setMotorDirectionAndSpeed(int motorNumber, int rpm) {
   bool direction = rpm >= 0; // RPM이 양수 또는 0이면 true, 음수면 false
   int speedValue = abs(rpm); // 속도 값은 RPM의 절대값
-
   if (motorNumber == 1) {
     digitalWrite(motorDirection1_1, direction ? LOW : HIGH);
     digitalWrite(motorDirection2_1, direction ? HIGH : LOW);
@@ -82,17 +82,15 @@ void setup() {
   digitalWrite(motorDirection2_2, HIGH);
   analogWrite(motorSpeedPin2, 0);
 
-  myservo1.attach(31);
-  myservo2.attach(30);
-  myservo3.attach(4);
-  myservo4.attach(5);
-  camera_servo.attach(6);
+  myservo1.attach(5);
+  myservo2.attach(4);
+  myservo3.attach(6);
+  myservo4.attach(31);
   
   myservo1.write(current_angle1);
   myservo2.write(current_angle2);
   myservo3.write(current_angle3);
   myservo4.write(current_angle4);
-  camera_servo.write(current_angle5);
 }
 
 void loop() {
@@ -107,17 +105,14 @@ void loop() {
       if (rpm >= 0) {
         targetRPM_left = rpm;
       } else { // rpm < 0
-        targetRPM_left = -rpm; // RPM 값을 양수로 설정
+        setMotorDirectionAndSpeed(1, rpm); // 모터 방향 및 속도 설정
       }
-      setMotorDirectionAndSpeed(1, rpm); // 모터 방향 및 속도 설정
-
     } else if (motorNumber == 2) {
       if (rpm >= 0) {
         targetRPM_right = rpm;
       } else { // rpm < 0
-        targetRPM_right = -rpm; // RPM 값을 양수로 설정
-      }
-      setMotorDirectionAndSpeed(2, rpm); // 모터 방향 및 속도 설정
+       setMotorDirectionAndSpeed(2, rpm); // 모터 방향 및 속도 설정
+      }  
       }
     } else if (command.startsWith("S")) {
     int servoNumber = command.charAt(1) - '0';
@@ -209,13 +204,7 @@ void setServoAngle(int servoNumber, int angle) {
         myservo4.write(angle);
         current_angle4 = angle;
         break;
-      case 5:
-        for (int pos5 = current_angle5; pos5 != angle; pos5 += (angle > current_angle5) ? 1 : -1) {
-            camera_servo.write(pos5);
-            delay(20);
-          }
-        camera_servo.write(angle);
-        current_angle5 = angle;
+     
 		break;
         default:
          Serial.println("Invalid servo number");
