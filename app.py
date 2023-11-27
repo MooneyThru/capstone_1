@@ -10,7 +10,7 @@ def index():
 def add_animal():
     data = request.json
     animal = data.get('animal')
-    with open('animals.txt', 'a') as file:
+    with open('cart_items.txt', 'a') as file:
         file.write(animal + '\n')
     return '', 204
 
