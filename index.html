@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Drag and Drop Animals</title>
+    <style>
+        #div1 {
+            width: 350px;
+            height: 70px;
+            padding: 10px;
+            border: 1px solid #aaaaaa;
+        }
+
+        .draggable {
+            padding: 5px 10px;
+            margin: 5px;
+            border: 1px solid #000;
+            background-color: #fff;
+            cursor: move;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+
+<h1>What would you like to order?</h1>
+<h2>Drag and Drop Animals into the Box</h2>
+
+<div id="div1" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+<br>
+
+<div class="draggable" draggable="true" ondragstart="drag(event)" id="giraffe">Giraffe</div>
+<!--<div class="draggable" draggable="true" ondragstart="drag(event)" id="elephant">Elephant</div>-->
+<div class="draggable" draggable="true" ondragstart="drag(event)" id="dinosaur">Dinosaur</div>
+
+<script>
+function allowDrop(ev) {
+    ev.preventDefault();
+}
+
+function drag(ev) {
+    ev.dataTransfer.setData("text", ev.target.id);
+}
+
+function drop(ev) {
+    ev.preventDefault();
+    var data = ev.dataTransfer.getData("text");
+    ev.target.appendChild(document.getElementById(data));
+
+    // Send the animal name to the server
+    fetch('/add_animal', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ animal: data }),
+    }).then(() => {
+        updateAnimals(); // Update the list after adding an animal
+    });
+}
+
+function updateAnimals() {
+    fetch('/get_animals')
+        .then(response => response.json())
+        .then(data => {
+            const div1 = document.getElementById('div1');
+            div1.innerHTML = '';  // Clear the current list
+            data.animals.forEach(animal => {
+                const div = document.createElement('div');
+                div.textContent = animal;
+                div.classList.add('draggable');
+                div1.appendChild(div);
+            });
+        });
+}
+
+// Load the animal list when the page is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    updateAnimals();
+    setInterval(updateAnimals, 5000);  // Update every 5 seconds
+});
+</script>
+
+</body>
+</html>

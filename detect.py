@@ -193,11 +193,11 @@ def run(
                         dinosaur_side = 12.5
                         dinosaur_height = 8.8
                         height = dinosaur_height
-                    elif class_name == 'monkey_doll':
-                        monkey_x = 6.5
-                        monkey_side = 8.8
-                        monkey_heiht = 6
-                        height = monkey_heiht
+                    elif class_name == 'box':
+                        box_x = 15
+                        box_side = 23
+                        box_height = 13
+                        height = box_height
                     elif class_name == 'elephant_doll':
                         elephant_x = 9.5
                         elephant_side = 14
@@ -241,7 +241,7 @@ def run(
                 z_target = height / 2
                 # z_target = ((center_y - 240) * distance_y) / 940
 
-                LOGGER.info(f"object : {class_name}, distance : {distance_y}")
+                LOGGER.info(f"object : {class_name}, center_x : {center_x},  distance : {distance_y}")
                 # bbox_coordinates = tuple(map(int, xyxy))
                 # LOGGER.info(f"class: {class_name}, bounding box coordinate : {bbox_coordinates}")
 

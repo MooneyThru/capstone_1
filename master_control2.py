@@ -32,11 +32,9 @@ def get_first_word_from_file(file_path):
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
-
 def set_motor_speed(left_speed, right_speed):
     robo.write(f"M2{right_speed}\n".encode())
     robo.write(f"M1{left_speed}\n".encode())
-
 def set_servo_angle(servo_number, angle):
     command = f"S{servo_number}{angle}\n"
     robo.write(command.encode())
@@ -71,19 +69,19 @@ def search_for_object(item):
                 x_coordinate = detected_object['center_x']  # 객체의 x 좌표
                 print("search_for_object : ", x_coordinate)
                 set_motor_speed(0, 0)
-                if 290 <= x_coordinate <= 340:
+                if 320 <= x_coordinate <= 410:
 
                     set_motor_speed(0, 0)
                     print("Object found and within range.")
                     print("---------------break---------------")
                     break  # 원하는 객체를 찾고 좌표 범위 내에 있으면 루프를 빠져나옴
-                elif x_coordinate < 290:
+                elif x_coordinate < 320:
                     set_motor_speed(-2, 2)
                     time.sleep(1)
                     set_motor_speed(0, 0)
                     time.sleep(1)
                     print("Object found but not within range. Adjusting position...")
-                elif 340 < x_coordinate:
+                elif 410 < x_coordinate:
                     set_motor_speed(2, -2)
                     time.sleep(1)
                     set_motor_speed(0, 0)
@@ -102,7 +100,6 @@ def search_for_object(item):
         except Exception as e:
             print(f"Unexpected error: {e}")
             break
-
 def move_to_target(item):
     print("move_to_target")
     while True:
@@ -113,26 +110,22 @@ def move_to_target(item):
                 x_coordinate = detected_object['center_x']  # 객체의 x 좌표
                 print("distance_y :",distance)
 
-                if distance >= 45:
+                if distance >= 42:
                     set_motor_speed(4, 4)
-                    print("speed 5, 5")
-                elif 35 <= distance < 45 :
+                    print("speed 4, 4")
+                elif 35 <= distance < 42 :
                     set_motor_speed(2, 2)
-                    # if x_coordinate >= 290:
-                    #     set_motor_speed(4, 3)
-                    #     print("speed 4, 3")
-                    # else:
-                    #     set_motor_speed(3, 4)
-                    #     print("speed 3, 4")
+
                 elif 32 <= distance < 35:
                     set_motor_speed(0, 0)
-                    time.sleep(10)
+                    time.sleep(1)
                     print("--------------------   speed 0, 0   --------------------")
                     break
                 elif distance < 32:
                     set_motor_speed(-3, -3)
                     time.sleep(1)
                     set_motor_speed(0, 0)
+                    time.sleep(1)
                     print("backward")
             else:
                 print("Object not found.")
@@ -142,7 +135,6 @@ def move_to_target(item):
             pass
         except Exception as e:
             print(f"Unexpected error: {e}")
-
 def align_with_object(item):
     while True:
         print("align_with_object")
@@ -178,7 +170,6 @@ def align_with_object(item):
             print("Interrupted by user.")
         except Exception as e:
             print(f"Unexpected error: {e}")
-
 def inverse_kinematics(x_target, y_target, z_target):
     # 목표점까지의 거리 계산
     d = np.sqrt(x_target ** 2 + y_target ** 2 + z_target ** 2)
@@ -222,34 +213,12 @@ def inverse_kinematics(x_target, y_target, z_target):
     theta4_deg = 90 + theta4_deg
     theta2_deg = 90 - theta2_deg
     return theta1_deg, theta2_deg, theta3_deg, theta4_deg
-
-# def grip_coordinate(item):
-#     try:
-#         print("grip_coordinate!!")
-#         detected_object = get_last_object(item)
-#         if detected_object["class_name "] == 'giraffe_head':
-#             y_target = 24
-#             z_target = 9.5
-#             return y_target, z_target
-#         elif detected_object["class_name "] == 'dinosaur':
-#             y_target = 24
-#             z_target = 4.4
-#             return y_target, z_target
-#         else:
-#             print("Desired item not found in detected objects.")
-#             return None, None
-#     except Exception as e:
-#         print(f"Error reading from JSON: {e}")
-#         return None, None
-
-
-def pick_up_object(theta2_deg, theta3_deg, theta4_deg):
-
+def pick_up_object(item,theta2_deg, theta3_deg, theta4_deg):
     print("pick_up_object")
-    set_servo_angle(4, 100)
-    time.sleep(2)
-    set_motor_speed(-10, -10)
+    set_servo_angle(4, 120)
     time.sleep(3)
+    set_motor_speed(-10, -10)
+    time.sleep(2)
     set_motor_speed(0, 0)
     time.sleep(1)
     # 서보 모터 2, 3, 4의 각도를 설정
@@ -260,13 +229,33 @@ def pick_up_object(theta2_deg, theta3_deg, theta4_deg):
     set_servo_angle(3, theta4_deg)
     time.sleep(1)
     set_motor_speed(10, 10)
-    time.sleep(3)
+    time.sleep(5)
     set_motor_speed(0, 0)
     time.sleep(1)
     set_servo_angle(4, 30)
-    time.sleep(1)
+    time.sleep(3)
     # 잡은거 확인 하는
-
+    set_servo_angle(1, 90)
+    time.sleep(1)
+    set_servo_angle(2, 30)
+    time.sleep(1)
+    set_servo_angle(3, 50)
+    time.sleep(1)
+def place_object():
+    print("place_object")
+    set_motor_speed(10, 10)
+    time.sleep(1)
+    set_motor_speed(0,0)
+    time.sleep(1)
+    set_servo_angle(1, 70)
+    time.sleep(2)
+    set_servo_angle(2, 30)
+    time.sleep(2)
+    set_servo_angle(3, 60)
+    time.sleep(1)
+    set_servo_angle(4, 80)
+    time.sleep(1)
+    # 로봇팔 원위치
     set_servo_angle(1, 90)
     time.sleep(1)
     set_servo_angle(2, 30)
@@ -274,28 +263,6 @@ def pick_up_object(theta2_deg, theta3_deg, theta4_deg):
     set_servo_angle(3, 50)
     time.sleep(1)
 
-def place_object(robot, theta2_deg, theta3_deg, theta4_deg):
-    print("place_object")
-    robot.set_servo_angle(4, theta2_deg)
-    robot.set_servo_angle(3, theta3_deg)
-    robot.set_servo_angle(2, theta4_deg)
-    robot.set_motor_speed(-10, -10)
-    time.sleep(1)
-    robot.set_motor_speed(10, 10)
-    time.sleep(1)
-    robot.set_servo_angle(1, 80)
-    time.sleep(1)
-    # 잡은거 확인 하는
-
-    # 로봇팔 원위치
-    robot.set_servo_angle(4, 180)
-    time.sleep(1)
-    robot.set_servo_angle(3, 0)
-    time.sleep(1)
-    robot.set_servo_angle(2, 100)
-    time.sleep(1)
-
-# 아두이노와 시리얼 통신 설정
 # 링크 길이 정의
 link1_length = 12.0
 link3_length = 12.0
@@ -303,8 +270,6 @@ link4_length = 10.0
 file_path = 'cart_items.txt'
 cart_item = None  # 초기화 추가
 
-# def mainthread(file_path):
-#     global item
 while True:
     try:
         first_word = get_first_word_from_file(file_path)
@@ -312,12 +277,10 @@ while True:
             #print("First word in the file:", first_word)
             cart_item = first_word
             print(f"you have chosen : {cart_item}")
-            time.sleep(3)
+            time.sleep(2)
+        else:
+            set_motor_speed(0, 0)
 
-        # if cart_item == 'elephant':
-        #     item = 'elephant_doll'
-        # elif cart_item == 'monkey':
-        #     item = 'monkey_doll'
         if cart_item == 'giraffe':
             item = 'giraffe_head'
             x_target = 0
@@ -327,51 +290,56 @@ while True:
             item = 'dinosaur'
             x_target = 0
             y_target = 24
-            z_target = 4.4
+            z_target = 6
 
         search_for_object(item)
         time.sleep(1)
         move_to_target(item)
         time.sleep(1)
+
         # 물체 정중앙 위치시키기
         align_with_object(item)
         time.sleep(1)
+
         # 좌푯값 가져와서 잡기
         set_motor_speed(0, 0)
-        # y_target, z_target = grip_coordinate(item)
         time.sleep(1)
         theta1_deg, theta2_deg, theta3_deg, theta4_deg = inverse_kinematics(x_target, y_target, z_target)
         print( "angle : ", theta2_deg, ", ", theta3_deg, ", ", theta4_deg)
         time.sleep(1)
-        pick_up_object(theta2_deg, theta3_deg, theta4_deg)
+        pick_up_object(item, theta2_deg, theta3_deg, theta4_deg)
         set_motor_speed(0,0)
 
         item = 'box'
+        if item == 'box':
+            box_height = 12
+            y_target = 24
+            z_target = box_height
 
-        # # 물체의 좌표를 가져와서 로봇 암을 해당 위치로 이동
-        # search_for_object(item)
-        # move_to_target(item)
-        # # 좌푯값 가져와서 내려 놓기
-        # align_with_object(item)
-        # y_target, z_target = grip_coordinate(item)
-        # theta2_deg, theta3_deg, theta4_deg = inverse_kinematics(x_target, y_target, z_target)
-        #
-        # # 설정된 위치에 물체를 내려놓기
-        # place_object(theta2_deg, theta3_deg, theta4_deg)
+        print(item)
+        # 물체의 좌표를 가져와서 로봇 암을 해당 위치로 이동
+        search_for_object(item)
+        move_to_target(item)
+        # 좌푯값 가져와서 내려 놓기
+        align_with_object(item)
+        set_motor_speed(10, 10)
+        time.sleep(2)
+        set_motor_speed(0, 0)
 
-        #마지막 카트 에 아이템 지우기
+        # 설정된 위치에 물체를 내려놓기
+        place_object()
+
         # 마지막 카트에 아이템 지우기
-        # with open('cart_items.txt', 'r+') as file:
-        #     lines = file.readlines()
-        #     file.seek(0)  # 파일 포인터를 시작 지점으로 이동
-        #     file.truncate()  # 파일 내용을 현재 위치에서 잘라냄
-        #
-        #     # 'item'을 제외한 나머지 줄들을 유지
-        #     lines = [line for line in lines if line.strip() != item]
-        #
-        #     # 파일 다시 쓰기
-        #     file.writelines(lines)
-        time.sleep(30)
+        with open('cart_items.txt', 'r+') as file:
+            lines = file.readlines()
+            file.seek(0)  # 파일 포인터를 시작 지점으로 이동
+            file.truncate()  # 파일 내용을 현재 위치에서 잘라냄
+            # 'item'을 제외한 나머지 줄들을 유지
+            lines = [line for line in lines if line.strip() != item]
+            # 파일 다시 쓰기
+            file.writelines(lines)
+        print("DONE!")
+        time.sleep(3)
 
     except KeyboardInterrupt:
         break
