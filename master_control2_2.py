@@ -95,22 +95,23 @@ def move_to_target(item):
     while True:
         try:
             detected_object = get_last_object(item)
-            if detected_object:
-                distance = detected_object['distance_y']  # 객체의 y 거리
-                print("distance_y :",distance)
-                if distance >= 35:
-                    set_motor_speed(7, 7)
-                    print("speed 7, 7")
+            class_name = detected_object.get('class_name', None)  # 기본값 None으로 설정
 
+            if class_name in ['giraffe_head', 'dinosaur']:
+                distance = detected_object['distance_y']  # 객체의 y 거리
+                print("distance_y :", distance)
+
+                if distance >= 35:
+                    set_motor_speed(15, 15)
+                    print("speed 7, 7")
                 elif 28 <= distance < 35:
                     set_motor_speed(6, 6)
                     print("speed 6, 6")
                     time.sleep(1)
-
                 elif 20 <= distance < 28:
                     set_motor_speed(0, 0)
                     time.sleep(1)
-                    print("--------------------   speed 0, 0   --------------------")
+                    print("----------   speed 0, 0   ---------")
                     break
                 elif distance < 32:
                     set_motor_speed(-5, -5)
@@ -118,23 +119,25 @@ def move_to_target(item):
                     set_motor_speed(0, 0)
                     time.sleep(1)
                     print("backward")
-            elif detected_object['class_item'] == 'box' :
+            elif class_name in ['box']:
                 distance = detected_object['distance_y']  # 객체의 y 거리
-                print("distance_y :",distance)
+                print("distance_y :", distance)
+
                 if distance >= 37:
-                    set_motor_speed(7, 7)
-                    print("speed 7, 7")
+                    set_motor_speed(13, 13)
+                    print("box speed 7, 7")
 
                 elif 33 <= distance < 37:
                     set_motor_speed(6, 6)
-                    print("speed 6, 6")
+                    print("box speed 6, 6")
                     time.sleep(1)
 
                 elif 28 <= distance < 33:
                     set_motor_speed(0, 0)
                     time.sleep(1)
-                    print("--------------------   speed 0, 0   --------------------")
+                    print("box --------------------   speed 0, 0   --------------------")
                     break
+
                 elif distance < 28:
                     set_motor_speed(-5, -5)
                     time.sleep(3)
@@ -148,18 +151,22 @@ def move_to_target(item):
             time.sleep(1)
         except KeyboardInterrupt:
             pass
+        except KeyError as e:
+            print(f"Key not found in detected_object: {e}")
         except Exception as e:
             print(f"Unexpected error: {e}")
+
 def align_with_object(item):
     while True:
         print("align_with_object")
         try:
             detected_object = get_last_object(item)  # 루프 내에서 객체 정보 갱신
+            class_name = detected_object.get('class_name', None)
             print(f"aligning item!! {detected_object['class_name']}")
-            if detected_object['class_name'] == 'dinosaur':
+            if class_name in ['dinosaur'] :
                 x_coordinate = detected_object['center_x']
                 print("align_with_object: ", x_coordinate)
-                if 350 <= x_coordinate and x_coordinate <= 370:
+                if 350 <= x_coordinate <= 370:
                     set_motor_speed(0, 0)
                     time.sleep(1)
                     print("Object found and within range.")
@@ -176,27 +183,27 @@ def align_with_object(item):
                     set_motor_speed(0, 0)
                     print("Object found but not within range. Adjusting position...")
                     return True
-            elif detected_object['class_name'] == 'giraffe_head':
+            elif class_name in ['giraffe_head']:
                 x_coordinate = detected_object['center_x']
                 print("align_with_object: ", x_coordinate)
-                if 320 <= x_coordinate and x_coordinate <= 370:
+                if 270 <= x_coordinate <= 320:
                     set_motor_speed(0, 0)
                     time.sleep(1)
                     print("Object found and within range.")
                     break
-                elif x_coordinate < 320:
+                elif x_coordinate < 270:
                     set_motor_speed(-3, 3)
                     time.sleep(1)
                     set_motor_speed(0, 0)
                     print("Object found but not within range. Adjusting position...")
                     return True
-                elif 370 < x_coordinate:
+                elif 320 < x_coordinate:
                     set_motor_speed(3, -3)
                     time.sleep(1)
                     set_motor_speed(0, 0)
                     print("Object found but not within range. Adjusting position...")
                     return True
-            elif detected_object['class_name'] == 'box':
+            elif class_name in ['box']:
                 x_coordinate = detected_object['center_x']
                 if 190 <= x_coordinate <= 240:
                     set_motor_speed(0, 0)
@@ -267,35 +274,66 @@ def inverse_kinematics(x_target, y_target, z_target):
     theta4_deg = 90 + theta4_deg
     theta2_deg = 90 - theta2_deg
     return theta1_deg, theta2_deg, theta3_deg, theta4_deg
-def pick_up_object(theta2_deg, theta3_deg, theta4_deg):
+def pick_up_object(item, theta2_deg, theta3_deg, theta4_deg):
     try:
+        detected_object = get_last_object(item)  # 루프 내에서 객체 정보 갱신
+        class_name = detected_object.get('class_name', None)
+        print(f"aligning item!! {detected_object['class_name']}")
         print("pick_up_object")
-        set_servo_angle(4, 120)
-        time.sleep(2)
-        set_motor_speed(-10, -10)
-        time.sleep(3)
-        set_motor_speed(0, 0)
-        time.sleep(1)
-        # 서보 모터 2, 3, 4의 각도를 설정
-        set_servo_angle(1, theta2_deg)
-        time.sleep(1)
-        set_servo_angle(2, theta3_deg)
-        time.sleep(1)
-        set_servo_angle(3, theta4_deg)
-        time.sleep(1)
-        set_motor_speed(10, 10)
-        time.sleep(5)
-        set_motor_speed(0, 0)
-        time.sleep(1)
-        set_servo_angle(4, 30)
-        time.sleep(3)
-        # 잡은거 확인 하는
-        set_servo_angle(1, 90)
-        time.sleep(1)
-        set_servo_angle(2, 30)
-        time.sleep(1)
-        set_servo_angle(3, 50)
-        time.sleep(1)
+        if class_name in ['dinosaur']:
+            set_servo_angle(4, 120)
+            time.sleep(2)
+            set_motor_speed(-10, -10)
+            time.sleep(3)
+            set_motor_speed(0, 0)
+            time.sleep(1)
+            # 서보 모터 2, 3, 4의 각도를 설정
+            set_servo_angle(1, theta2_deg)
+            time.sleep(1)
+            set_servo_angle(2, theta3_deg)
+            time.sleep(1)
+            set_servo_angle(3, theta4_deg)
+            time.sleep(1)
+            set_motor_speed(10, 10)
+            time.sleep(4)
+            set_motor_speed(0, 0)
+            time.sleep(1)
+            set_servo_angle(4, 30)
+            time.sleep(3)
+            # 잡은거 확인 하는
+            set_servo_angle(1, 90)
+            time.sleep(1)
+            set_servo_angle(2, 30)
+            time.sleep(1)
+            set_servo_angle(3, 50)
+            time.sleep(1)
+        else:
+            set_servo_angle(4, 120)
+            time.sleep(2)
+            set_motor_speed(-10, -10)
+            time.sleep(3)
+            set_motor_speed(0, 0)
+            time.sleep(1)
+            # 서보 모터 2, 3, 4의 각도를 설정
+            set_servo_angle(1, theta2_deg)
+            time.sleep(1)
+            set_servo_angle(2, theta3_deg)
+            time.sleep(1)
+            set_servo_angle(3, theta4_deg)
+            time.sleep(1)
+            set_motor_speed(10, 10)
+            time.sleep(5)
+            set_motor_speed(0, 0)
+            time.sleep(1)
+            set_servo_angle(4, 30)
+            time.sleep(3)
+            # 잡은거 확인 하는
+            set_servo_angle(1, 90)
+            time.sleep(1)
+            set_servo_angle(2, 30)
+            time.sleep(1)
+            set_servo_angle(3, 50)
+            time.sleep(1)
     except KeyboardInterrupt:
         print("Interrupted by user.")
     except Exception as e:
@@ -344,17 +382,19 @@ def main():
                 set_motor_speed(0, 0)
 
             if cart_item == 'giraffe':
+                remove_item = cart_item
                 item = 'giraffe_head'
                 x_target = 0
                 y_target = 25
                 z_target = 7
             elif cart_item == 'dinosaur':
+                remove_item = cart_item
                 item = 'dinosaur'
                 x_target = 0
                 y_target = 24
                 z_target = 8
 
-            # search_for_object(item)
+            search_for_object(item)
             move_to_target(item)
             # 물체 정중앙 위치시키기
             align_with_object(item)
@@ -363,15 +403,17 @@ def main():
             theta1_deg, theta2_deg, theta3_deg, theta4_deg = inverse_kinematics(x_target, y_target, z_target)
             print( "angle : ", theta2_deg, ", ", theta3_deg, ", ", theta4_deg)
             time.sleep(1)
-            pick_up_object(theta2_deg, theta3_deg, theta4_deg)
+            pick_up_object(item,theta2_deg, theta3_deg, theta4_deg)
             set_motor_speed(0,0)
 
             item = 'box'
-            # if item == 'box':
-            #     box_height = 12
-            #     y_target = 20
-            #     z_target = box_height
+            if item == 'box':
+                box_height = 12
+                y_target = 20
+                z_target = box_height
 
+            set_motor_speed(-20,-20)
+            time.sleep(3)
             print(item)
             # # 물체의 좌표를 가져와서 로봇 암을 해당 위치로 이동
             search_for_object(item)
@@ -383,15 +425,17 @@ def main():
             set_motor_speed(0, 0)
             # 설정된 위치에 물체를 내려놓기
             place_object()
-            #
+
             # 마지막 카트에 아이템 지우기
-            with open('cart_items.txt', 'r+') as file:
+            item_to_remove = remove_item
+
+            with open('cart_items.txt', 'r') as file:
                 lines = file.readlines()
-                file.seek(0)  # 파일 포인터를 시작 지점으로 이동
-                file.truncate()  # 파일 내용을 현재 위치에서 잘라냄
-                # 'item'을 제외한 나머지 줄들을 유지
-                lines = [line for line in lines if line.strip() != item]
-                # 파일 다시 쓰기
+
+            # 'item_to_remove'를 제외한 나머지 줄들을 유지
+            lines = [line for line in lines if line.strip() != item_to_remove]
+
+            with open('cart_items.txt', 'w') as file:
                 file.writelines(lines)
             print("DONE!")
             time.sleep(3)
