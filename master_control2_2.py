@@ -2,13 +2,11 @@ import serial
 import time
 import numpy as np
 import json
-import subprocess
 
 # port = '/dev/ttyACM0' # for Linux
 port = 'COM7'         # for Windows
-robo = serial.Serial(port, 9600)  # 'COM포트'는 아두이노가 연결된 포트로 수정
-time.sleep(2)  # 시리얼 통신 시작 후 잠시 대기
-# 파일에서 첫 번째 단어 가져오기
+robo = serial.Serial(port, 9600)
+time.sleep(2)
 
 # 전역 변수 선언
 item = None
@@ -19,8 +17,8 @@ theta4_deg = 0
 def get_first_word_from_file(file_path):
     try:
         with open(file_path, 'r') as file:
-            first_line = file.readline()  # 첫 번째 줄 읽기
-            first_word = first_line.split()[0]  # 첫 번째 단어 추출
+            first_line = file.readline()
+            first_word = first_line.split()[0]
             return first_word
     except FileNotFoundError:
         print("File not found.")
@@ -37,7 +35,6 @@ def set_motor_speed(left_speed, right_speed):
 def set_servo_angle(servo_number, angle):
     command = f"S{servo_number}{angle}\n"
     robo.write(command.encode())
-
 def get_last_object(item):
     try:
         with open('detected_objects.json', 'r') as f:
@@ -48,7 +45,7 @@ def get_last_object(item):
     except Exception as e:
         print(f"Error reading from JSON: {e}")
         return None
-def search_for_object(item):
+def search_for_object(item, algorithm_number):
     while True:
         try:
             # item과 일치하는 class_name을 가진 객체만 필터링
@@ -64,14 +61,20 @@ def search_for_object(item):
                     print("---------------break---------------")
                     break  # 원하는 객체를 찾고 좌표 범위 내에 있으면 루프를 빠져나옴
                 elif x_coordinate < 320:
-                    set_motor_speed(-2, 2)
+                    if algorithm_number % 2 == 1:
+                        set_motor_speed(-2, 2)
+                    else:
+                        set_motor_speed(-3, 3)
                     time.sleep(1)
                     set_motor_speed(0, 0)
                     time.sleep(1)
                     print("Object found but not within range. Adjusting position...")
 
                 elif 410 < x_coordinate:
-                    set_motor_speed(2, -2)
+                    if algorithm_number % 2 == 1:
+                        set_motor_speed(2, -2)
+                    else:
+                        set_motor_speed(3, -3)
                     time.sleep(1)
                     set_motor_speed(0, 0)
                     time.sleep(1)
@@ -79,8 +82,10 @@ def search_for_object(item):
 
             else:
                 print("searching item : ", item)
-                # 물체를 찾지 못했으면 계속 돌기
-                set_motor_speed(-3, 3)
+                if algorithm_number % 2 == 1:
+                    set_motor_speed(-3, 3)
+                else:
+                    set_motor_speed(3, -3)
                 time.sleep(1)
                 set_motor_speed(0, 0)
                 time.sleep(1)
@@ -145,7 +150,7 @@ def move_to_target(item):
                     time.sleep(1)
                     print("backward")
             else:
-                search_for_object(item)
+                search_for_object(item,1)
                 print("Object not found.")
 
             time.sleep(1)
@@ -155,7 +160,6 @@ def move_to_target(item):
             print(f"Key not found in detected_object: {e}")
         except Exception as e:
             print(f"Unexpected error: {e}")
-
 def align_with_object(item):
     while True:
         print("align_with_object")
@@ -338,7 +342,6 @@ def pick_up_object(item, theta2_deg, theta3_deg, theta4_deg):
         print("Interrupted by user.")
     except Exception as e:
         print(f"Unexpected error: {e}")
-
 def place_object():
     print("place_object")
     set_servo_angle(4, 30)
@@ -378,67 +381,88 @@ def main():
                 cart_item = first_word
                 print(f"you have chosen : {cart_item}")
                 time.sleep(1)
+
+                if cart_item == 'giraffe':
+                    rev_remove_item = cart_item
+                    count = 1
+                    item = 'giraffe_head'
+                    x_target = 0
+                    y_target = 25
+                    z_target = 7
+                elif cart_item == 'dinosaur':
+                    count = 2
+                    rev_remove_item = cart_item
+                    item = 'dinosaur'
+                    x_target = 0
+                    y_target = 24
+                    z_target = 8
+                    # 스위치 문으로 변환
+
+
+                if count % 2 == 0:  # Even count
+                    search_for_object(item, 1)
+                else:  # Odd count
+                    search_for_object(item, 2)
+
+                move_to_target(item)
+                # 물체 정중앙 위치시키기
+                align_with_object(item)
+
+                # 좌푯값 가져와서 잡기
+                theta1_deg, theta2_deg, theta3_deg, theta4_deg = inverse_kinematics(x_target, y_target, z_target)
+                print( "angle : ", theta2_deg, ", ", theta3_deg, ", ", theta4_deg)
+                time.sleep(1)
+                pick_up_object(item,theta2_deg, theta3_deg, theta4_deg)
+                set_motor_speed(0,0)
+
+                item = 'box'
+                if item == 'box':
+                    box_height = 12
+                    y_target = 20
+                    z_target = box_height
+
+                set_motor_speed(-20,-20)
+                time.sleep(3)
+                set_motor_speed((0,0))
+                time.sleep(1)
+                print(item)
+                # # 물체의 좌표를 가져와서 로봇 암을 해당 위치로 이동
+                if count % 2 == 0:  # Even count
+                    search_for_object(item, 1)
+                else:  # Odd count
+                    search_for_object(item, 2)
+
+                move_to_target(item)
+                # 좌푯값 가져와서 내려 놓기
+                align_with_object(item)
+                set_motor_speed(10, 10)
+                time.sleep(2)
+                set_motor_speed(0, 0)
+                # 설정된 위치에 물체를 내려놓기
+                place_object()
+
+                set_motor_speed(-10, -10)
+                time.sleep(3)
+                set_motor_speed((0, 0))
+                time.sleep(1)
+
+                # 마지막 카트에 아이템 지우기
+                item_to_remove = rev_remove_item
+                count += 1
+
+                with open('cart_items.txt', 'r') as file:
+                    lines = file.readlines()
+
+                # 'item_to_remove'를 제외한 나머지 줄들을 유지
+                lines = [line for line in lines if line.strip() != item_to_remove]
+
+                with open('cart_items.txt', 'w') as file:
+                    file.writelines(lines)
+                print("DONE!")
+                time.sleep(2)
             else:
                 set_motor_speed(0, 0)
-
-            if cart_item == 'giraffe':
-                remove_item = cart_item
-                item = 'giraffe_head'
-                x_target = 0
-                y_target = 25
-                z_target = 7
-            elif cart_item == 'dinosaur':
-                remove_item = cart_item
-                item = 'dinosaur'
-                x_target = 0
-                y_target = 24
-                z_target = 8
-
-            search_for_object(item)
-            move_to_target(item)
-            # 물체 정중앙 위치시키기
-            align_with_object(item)
-
-            # 좌푯값 가져와서 잡기
-            theta1_deg, theta2_deg, theta3_deg, theta4_deg = inverse_kinematics(x_target, y_target, z_target)
-            print( "angle : ", theta2_deg, ", ", theta3_deg, ", ", theta4_deg)
-            time.sleep(1)
-            pick_up_object(item,theta2_deg, theta3_deg, theta4_deg)
-            set_motor_speed(0,0)
-
-            item = 'box'
-            if item == 'box':
-                box_height = 12
-                y_target = 20
-                z_target = box_height
-
-            set_motor_speed(-20,-20)
-            time.sleep(3)
-            print(item)
-            # # 물체의 좌표를 가져와서 로봇 암을 해당 위치로 이동
-            search_for_object(item)
-            move_to_target(item)
-            # 좌푯값 가져와서 내려 놓기
-            align_with_object(item)
-            set_motor_speed(10, 10)
-            time.sleep(2)
-            set_motor_speed(0, 0)
-            # 설정된 위치에 물체를 내려놓기
-            place_object()
-
-            # 마지막 카트에 아이템 지우기
-            item_to_remove = remove_item
-
-            with open('cart_items.txt', 'r') as file:
-                lines = file.readlines()
-
-            # 'item_to_remove'를 제외한 나머지 줄들을 유지
-            lines = [line for line in lines if line.strip() != item_to_remove]
-
-            with open('cart_items.txt', 'w') as file:
-                file.writelines(lines)
-            print("DONE!")
-            time.sleep(3)
+                time.sleep(2)
 
         except KeyboardInterrupt:
             break
