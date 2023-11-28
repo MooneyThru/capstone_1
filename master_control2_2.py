@@ -166,18 +166,18 @@ def align_with_object(item):
             if class_name in ['dinosaur'] :
                 x_coordinate = detected_object['center_x']
                 print("align_with_object: ", x_coordinate)
-                if 350 <= x_coordinate <= 370:
+                if 240 <= x_coordinate <= 290:
                     set_motor_speed(0, 0)
                     time.sleep(1)
                     print("Object found and within range.")
                     break
-                elif x_coordinate < 350:
+                elif x_coordinate < 240:
                     set_motor_speed(-3, 3)
                     time.sleep(1)
                     set_motor_speed(0, 0)
                     print("Object found but not within range. Adjusting position...")
                     return True
-                elif 370 < x_coordinate:
+                elif 290 < x_coordinate:
                     set_motor_speed(3, -3)
                     time.sleep(1)
                     set_motor_speed(0, 0)
@@ -294,8 +294,8 @@ def pick_up_object(item, theta2_deg, theta3_deg, theta4_deg):
             time.sleep(1)
             set_servo_angle(3, theta4_deg)
             time.sleep(1)
-            set_motor_speed(10, 10)
-            time.sleep(4)
+            set_motor_speed(11, 10)
+            time.sleep(5)
             set_motor_speed(0, 0)
             time.sleep(1)
             set_servo_angle(4, 30)
@@ -322,7 +322,7 @@ def pick_up_object(item, theta2_deg, theta3_deg, theta4_deg):
             set_servo_angle(3, theta4_deg)
             time.sleep(1)
             set_motor_speed(10, 10)
-            time.sleep(5)
+            time.sleep(3)
             set_motor_speed(0, 0)
             time.sleep(1)
             set_servo_angle(4, 30)
