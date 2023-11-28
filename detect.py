@@ -33,6 +33,7 @@ import os
 import platform
 import sys
 import json
+import time
 
 from pathlib import Path
 
@@ -59,7 +60,7 @@ def run(
         source=ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
         data=ROOT / 'data/coco128.yaml',  # dataset.yaml path
         imgsz=(460, 640),  # inference size (height, width)
-        conf_thres=0.4,  # confidence threshold
+        conf_thres=0.6,  # confidence threshold
         iou_thres=0.45,  # NMS IOU threshold
         max_det=1000,  # maximum detections per image
         device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
@@ -81,7 +82,7 @@ def run(
         hide_conf=False,  # hide confidences
         half=False,  # use FP16 half-precision inference
         dnn=False,  # use OpenCV DNN for ONNX inference
-        vid_stride=1,  # video frame-rate stride
+        vid_stride=10,  # video frame-rate stride
 ):
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
@@ -180,27 +181,18 @@ def run(
                     class_name = names[int(cls)]
 
                     if class_name == 'giraffe': # It should cm of all measurement
-                        giraffe_x = 6.5          # look a front of giraffe
-                        giraffe_side = 14       # look a side of giraffe
                         giraffe_heiht = 17      # look any direction of giraffe
                         height = giraffe_heiht
                     elif class_name == 'giraffe_head':
-                        giraffe_head_side = 5
                         giraffe_head_height = 6
                         height = giraffe_head_height
                     elif class_name == 'dinosaur':
-                        dinosaur_x = 3.9
-                        dinosaur_side = 12.5
                         dinosaur_height = 8.8
                         height = dinosaur_height
                     elif class_name == 'box':
-                        box_x = 15
-                        box_side = 23
-                        box_height = 13
+                        box_height = 11
                         height = box_height
                     elif class_name == 'elephant_doll':
-                        elephant_x = 9.5
-                        elephant_side = 14
                         elephant_heiht = 8
                         height = elephant_heiht
 
@@ -223,45 +215,19 @@ def run(
                 value_queue_center_y.append(center_class_y)
 
                 # 평균값 계산
-                average_x = sum(value_queue_x) / len(value_queue_x)
                 average_y = sum(value_queue_y) / len(value_queue_y)
                 center_x = sum(value_queue_center_x) /len(value_queue_center_x)
-                center_y = sum(value_queue_center_y) / len(value_queue_center_y)
-                # surface_real = average_x * average_y
 
                 # If doesn't exist height of object, it means that object is too close to measure of distance from camera.
                 # focal camera distance is 1250, it should be (mm), 6 cm is for giraffe's side length.
-                print(average_y)
-                # distnace_xy = 1250 * {real_surface} / surface_real
                 distance_y = round(float(860 * height / average_y), 2) # 1250 : It should me mm of camera focal distance
-                # distance_x = round(float(940 * 6.5 / value_queue_x[-1]), 2)
-
-
-                y_target = ((center_x - 320) * distance_y) / 840
-                z_target = height / 2
-                # z_target = ((center_y - 240) * distance_y) / 940
-
                 LOGGER.info(f"object : {class_name}, center_x : {center_x},  distance : {distance_y}")
-                # bbox_coordinates = tuple(map(int, xyxy))
-                # LOGGER.info(f"class: {class_name}, bounding box coordinate : {bbox_coordinates}")
-
-                # 평균값 출력
-                # LOGGER.info(f'Average value_x: {average_x}, Average value_y: {average_y}')
-
-                # with open('average_values.txt', 'w') as f:
-                #     f.write(f'Average value_x: {center_x}\n')
-                #     # f.write(f'Average value_y: {center_y}\n')
-                #     f.write(f'Average distance: {distance_y}\n')
 
                 # JSON 데이터 구조에 추가합니다.
                 json_data = {
                     "class_name": class_name,
                     "center_x": round(float(center_x), 2),
-                    "center_y": round(float(center_y), 2),
-                    # "distance_x": round(float(distance_x), 2),
                     "distance_y": round(float(distance_y), 2),
-                    "y_target": round(float(distance_y), 2),
-                    "z_target": round(float(z_target), 2)
                 }
                 json_data_list.append(json_data)
 
@@ -286,14 +252,12 @@ def run(
                     save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
             else:
                 # 객체가 검출되지 않은 경우
-                json_data = {"info": "no detection"}
-                json_data_list.append(json_data)
-                if len(json_data_list) > 20:
-                    json_data_list.pop(0)
+                if json_data_list:
+                    json_data_list.pop(0)  # 처음 들어온 데이터 하나를 지웁니다.
 
                 with open(file_path, 'w') as f:
                     json.dump(json_data_list, f, indent=4)
-                pass
+
             # Stream results
             im0 = annotator.result()
             if view_img:
@@ -325,16 +289,6 @@ def run(
 
         # Print time (inference-only)
         LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
-        # # 객체가 검출되지 않은 경우
-
-        # if len(json_data_list) > 5:
-        #     json_data_list.pop(0)
-        # else:
-        #     pass
-        #
-        # with open(file_path, 'w') as file:
-        #     json.dump(data, file, indent=4)
-        #LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}")   this one is removed time values
 
     # Print results
     t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
