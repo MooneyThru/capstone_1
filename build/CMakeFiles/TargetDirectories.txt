@@ -1,0 +1,3 @@
+/home/capstone/Desktop/project_laser/laser_MJ/build/CMakeFiles/laser_MJ.dir
+/home/capstone/Desktop/project_laser/laser_MJ/build/CMakeFiles/edit_cache.dir
+/home/capstone/Desktop/project_laser/laser_MJ/build/CMakeFiles/rebuild_cache.dir
